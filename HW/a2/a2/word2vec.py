@@ -71,7 +71,7 @@ def naiveSoftmaxLossAndGradient(
     #dv_c = U^t(hat_y - y)
     gradCenterVec = outsideVectors.T.dot(hat_y - y)#(D,)
     #dU = (hat_y - y)v_c
-    gradOutsideVecs = (hat_y - y).dot(centerWordVec)#(N, D)
+    gradOutsideVecs = (hat_y - y).reshape(-1, 1).dot(centerWordVec.reshape(1, -1))#(N, D)
 
     ### Please use the provided softmax function (imported earlier in this file)
     ### This numerically stable implementation helps you avoid issues pertaining
@@ -128,14 +128,12 @@ def negSamplingLossAndGradient(
     dJdsig = sig - 1#Not exactly, for convenience. (K+1,)
 
     loss = - np.sum(np.log(sig))
-    gradCenterVec = (SampleVecs.T).dot(dJdsig) #Dx(K+1);(K+1)
+    gradCenterVec = (SampleVecs.T).dot(dJdsig) #Dx(K+1);(K+1,)
     #Initialize gradOutsideVecs
     gradOutsideVecs = np.zeros_like(outsideVectors)
-    gradOutsideVecs[outsideWordIdx] += (dJdsig[0] - 1) * centerWordVec
-    for i in negSampleWordIndices:
-        outsideVec = outsideVectors[i]
-        grad = (1 - sigmoid(-outsideVec.dot(centerWordVec))) * centerWordVec
-        gradOutsideVecs[i] += grad
+    grad = - dJdsig.reshape(-1, 1).dot(centerWordVec.reshape(1, -1))#(K+1, 1);(1, D)
+    grad[0] *= -1
+    np.add.at(gradOutsideVecs, indices, grad)
 
 
     ### END YOUR CODE
@@ -183,12 +181,13 @@ def skipgram(currentCenterWord, windowSize, outsideWords, word2Ind,
     gradOutsideVectors = np.zeros(outsideVectors.shape)
 
     ### YOUR CODE HERE (~8 Lines)
-    currentCenterWordVec = centerWordVectors[word2Ind[currentCenterWord]]#(D,)
+    centerWordIdx = word2Ind[currentCenterWord]
+    currentCenterWordVec = centerWordVectors[centerWordIdx]#(D,)
     for outsideword in outsideWords:
         outsidewordIdx = word2Ind[outsideword]
         closs, cgcv, cgov = word2vecLossAndGradient(currentCenterWordVec, outsidewordIdx, outsideVectors, dataset)#current loss, grad
         loss += closs
-        gradCenterVecs += cgcv
+        gradCenterVecs[centerWordIdx] += cgcv
         gradOutsideVectors += cgov
     ### END YOUR CODE
     
