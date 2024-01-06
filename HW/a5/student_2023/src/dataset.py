@@ -168,8 +168,6 @@ class CharCorruptionDataset(Dataset):
 
     def __getitem__(self, idx):
         # TODO [part e]: see spec above
-        raise NotImplementedError
-        """
         doc = self.data[idx]
 
         truncate_len = torch.randint(low=4, high=int(self.block_size*7/8), size=(1,))
@@ -192,7 +190,6 @@ class CharCorruptionDataset(Dataset):
         y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
 
         return (x, y)
-        """
 
 """
 Code under here is strictly for your debugging purposes; feel free to modify
